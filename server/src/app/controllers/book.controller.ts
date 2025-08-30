@@ -26,6 +26,7 @@ bookRoute.get("/", async (req: Request, res: Response) => {
 
 		const filter: any = {};
 		const sort: any = {};
+		let page: number = 0;
 		let limit: number = 10;
 
 		if (typeof data.filter === "string") {
@@ -36,6 +37,10 @@ bookRoute.get("/", async (req: Request, res: Response) => {
 			sort[data.sortBy] = data.sort.toLowerCase();
 		}
 
+		if (typeof data.page === "string") {
+			page = parseInt(data.page);
+		}
+
 		if (typeof data.limit === "string") {
 			const parsed = parseInt(data.limit);
 			if (!isNaN(parsed)) {
@@ -43,21 +48,21 @@ bookRoute.get("/", async (req: Request, res: Response) => {
 			}
 		}
 
-		const books = await Book.find(filter).sort(sort).limit(limit);
+		const books = await Book.find(filter)
+			.sort(sort)
+			.skip(page * limit)
+			.limit(limit);
 
 		if (books.length === 0) {
-			console.log(books.length);
-
 			res.status(200).json({
 				success: false,
 				message: "No Books found with current filters",
-				data: books,
 			});
 		} else {
 			res.status(200).json({
 				success: true,
 				message: "Books retrieved successfully",
-				data: books,
+				books,
 			});
 		}
 	} catch (err: any) {
